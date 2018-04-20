@@ -31,7 +31,7 @@ setup(
     ],
     author='yuqingsheng',
     author_email='qingsheng.yu@ishansong.com',
-    url='http://www.yongqianbao.com',
+    url='http://www.ishansong.com',
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
