@@ -3,6 +3,6 @@
 # 安装
    
     $ pip install --upgrade pip
-    $ pip install git+ssh://git@gitlab.intra.yongqianbao.com/data-science/maat.git@v_1.0
+    $ pip install git+https://github.com/yuqingsheng/tinytrans
 
 # Demo
