@@ -7,6 +7,7 @@
 
 # Demo
 
+~~~python
 import tinytrans.tinytrans as tt
 import pandas as pd
 
