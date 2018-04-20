@@ -1,1 +1,1 @@
-from . import tinytrans
+from tinytrans import *
