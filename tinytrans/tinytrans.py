@@ -6,7 +6,7 @@ from collections import defaultdict
 import math
 import copy
 
-
+a = 1000
 class TinyTrans(object):
     def __init__(self, data):
         self.data = data
@@ -40,7 +40,10 @@ class TinyTrans(object):
                 for type_tmp in arr:
                     type_code += total_arr[type_dict[type_tmp]]
             total_result.append(type_code)
-        return DataFrame(total_result, columns=columns)
+        new_df = DataFrame(total_result, columns=columns)
+        self.data = pd.concat([self.data, new_df], axis=1)
+        return self.data
+
 
     # 独热编码
     # input:
