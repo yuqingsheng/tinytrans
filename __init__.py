@@ -1,1 +1,0 @@
-from tinytrans.tinytrans import *
