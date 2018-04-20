@@ -1,1 +1,1 @@
-from tt import *
+from tinytrans import *
