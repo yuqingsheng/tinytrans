@@ -1,7 +1,5 @@
-numpy==1.13.3
-scipy==1.0.0
-scikit-learn==0.19
-jieba==0.38
-matplotlib==2.0.2
-sklearn-contrib-lightning==0.5.0
+numpy>=1.13.3
+scipy>=1.0.0
+scikit-learn>=0.19
+sklearn-contrib-lightning>=0.5.0
 pandas>=0.21.1
