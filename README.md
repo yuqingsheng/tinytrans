@@ -8,7 +8,7 @@
 # Demo
 
 ~~~python
-import tinytrans.tinytrans as tt
+import tinytrans as tt
 import pandas as pd
 
 info_df = pd.read_csv("order_info.csv", header=0)
