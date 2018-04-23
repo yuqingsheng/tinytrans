@@ -310,3 +310,14 @@ class TinyTrans(object):
         return data, feature_all
 
 
+    #默认值填充
+    #rule为dict，只有一个key，类似:{np.nan:0}
+    def default_value(self, data, cols, rule):
+        for col in cols:
+            data[col] = data[col].replace(rule)
+        return data
+
+    def get_num_of_pn(self, label_vector):
+        all_p = len(np.where(label_vector > 0)[0])
+        all_n = len(np.where(label_vector < 1)[0])
+        return all_p, all_n
