@@ -6,10 +6,9 @@ from collections import defaultdict
 import math
 import copy
 
-a = 1000
 class TinyTrans(object):
-    def __init__(self, data):
-        self.data = data
+    def __init__(self):
+        pass
 
     # 文档编码
     # input:
@@ -19,7 +18,9 @@ class TinyTrans(object):
     #       sep:待转换特征列里各个取值之间的分隔符
     # output:
     #       重新编码之后的多个特征列，dataframe格式
-    def special_encoder(self, colname, typelist, sep='|'):
+
+
+    def special_encoder(self, data, colname, typelist, sep='|'):
         length = len(typelist)
         arr = np.array([0] * length)
         total_arr = []
@@ -33,7 +34,7 @@ class TinyTrans(object):
         type_dict = dict(zip(typelist, list(range(1, length + 1))))
 
         total_result = []
-        for x in self.data[colname].values:
+        for x in data[colname].values:
             type_code = np.array([0] * length)
             if x and isinstance(x, str):
                 arr = x.split(sep)
@@ -41,8 +42,8 @@ class TinyTrans(object):
                     type_code += total_arr[type_dict[type_tmp]]
             total_result.append(type_code)
         new_df = DataFrame(total_result, columns=columns)
-        self.data = pd.concat([self.data, new_df], axis=1)
-        return self.data
+        data = pd.concat([data, new_df], axis=1)
+        return data
 
 
     # 独热编码
@@ -51,14 +52,14 @@ class TinyTrans(object):
     #       collist:需要转为onehot编码的特征列list
     # output:
     #       转换完之后的data
-    def onehot_encoder(self, collist):
+    def onehot_encoder(self, data, collist):
         for col in collist:
-            self.data[col] = self.data[col].astype('str')
-        return pd.get_dummies(self.data, dummy_na=True, columns=collist)
+            data[col] = data[col].astype('str')
+        return pd.get_dummies(data, dummy_na=True, columns=collist)
 
     # woe编码
-    def woe_encoder(self, colname, boxdetail):
-        origin_feature_vector = self.data[colname].values
+    def woe_encoder(self, data, colname, boxdetail):
+        origin_feature_vector = data[colname].values
         feature_vector = copy.deepcopy(origin_feature_vector)
         for i in range(len(boxdetail)):
             bin_box = boxdetail[i]
@@ -70,15 +71,15 @@ class TinyTrans(object):
             idx_2 = np.where(tmp_f <= right_edges)[0]
             idx = idx_1[idx_2]
             feature_vector[idx] = float(woe)
-        self.data[colname] = feature_vector
-        return self.data
+        data[colname] = feature_vector
+        return data
 
     # 分桶归一化，目的是为了解决长尾问题，常用的归一化方式解决不了长尾问题，使得最后特征值集中在一块，降低特征的区分能力
     # 对于特征值分布不均匀的数据，需要先做分桶，然后做分桶归一化，例如:
     # 总共分了n个桶，而特征xi属于其中的第bi(bi ∈ {0, ..., n - 1})个桶，则特征xi最终会归一化成 bi/n
     # 归一化操作和woe编码操作二选一
-    def normalization_boxdata(self, colname, boxinfo):
-        origin_feature_vector = self.data[colname].values
+    def normalization_boxdata(self, data, colname, boxinfo):
+        origin_feature_vector = data[colname].values
         feature_vector = copy.deepcopy(origin_feature_vector)
         for i in range(len(boxinfo)):
             bin_box = boxinfo[i]
@@ -90,11 +91,11 @@ class TinyTrans(object):
             idx_2 = np.where(tmp_f <= right_edges)[0]
             idx = idx_1[idx_2]
             feature_vector[idx] = float(value)
-        self.data[colname] = feature_vector
-        return self.data
+        data[colname] = feature_vector
+        return data
 
     # 获取分桶的详细信息
-    def transform_to_boxdata(self,boxinfo):
+    def transform_to_boxdata(self, boxinfo):
         box_data = []
         left_edge = float("-inf")
         right_edge = float("inf")
@@ -133,9 +134,9 @@ class TinyTrans(object):
         return box_data
 
     #等频分桶
-    def box_split_ef(self, colname, box_num):
+    def box_split_ef(self, data, colname, box_num):
         init_map = defaultdict(list)
-        feature_list = self.data[colname]
+        feature_list = data[colname]
         sample_nums = len(feature_list)
         value_counts = {}
         # 特征值排序
@@ -165,8 +166,8 @@ class TinyTrans(object):
         return init_map
 
     #等宽分桶
-    def box_split_ew(self, colname, box_num):
-        feature_list = self.data[colname]
+    def box_split_ew(self, data, colname, box_num):
+        feature_list = data[colname]
         feature_set = np.unique(feature_list)
         feature_set.sort()
         lens = len(feature_set)
@@ -196,11 +197,11 @@ class TinyTrans(object):
 
     #分桶
     #默认等频分桶
-    def box_split(self, colname, method='ef', box_num=10):
+    def box_split(self, data, colname, method='ef', box_num=10):
         if method == 'ew':
-            return transform_to_boxdata(box_split_ew(self.data, colname, box_num))
+            return self.transform_to_boxdata(self.box_split_ew(data, colname, box_num))
         else:
-            return transform_to_boxdata(box_split_ef(self.data, colname, box_num))
+            return self.transform_to_boxdata(self.box_split_ef(data, colname, box_num))
 
     #计算woe和iv值
     def cal_woe_iv(self, good_counts, bad_counts, all_good, all_bad):
@@ -264,18 +265,47 @@ class TinyTrans(object):
     #拉依达准则
     #input:
     #   max_outlier_rate:异常值占总记录的比例阈值，低于这个阈值的才会被过滤
-    def outlier_filter(self, colname, max_outlier_rate=0.05):
-        miu   = self.data[colname].mean()
-        lmbda = self.data[colname].std()
+    def outlier_filter(self, data, colname, max_outlier_rate=0.05):
+        miu   = data[colname].mean()
+        lmbda = data[colname].std()
         left_out  = miu - 3*lmbda
         right_out = miu + 3*lmbda
-        tmp_df = self.data[self.data[colname] >= left_out]
+        tmp_df = data[data[colname] >= left_out]
         tmp_df = tmp_df[tmp_df[colname] <= right_out]
 
         # 异常占比低于指定的比例，才进行删除
-        if (1 - 1.0 * len(tmp_df) / len(self.data)) <= max_outlier_rate:
+        if (1 - 1.0 * len(tmp_df) / len(data)) <= max_outlier_rate:
             return tmp_df
-        return self.data
+        return data
 
+    #按照格式生成最后的数据
+    #需要dataframe中必须有'label'列
+    #格式如下：
+    #label 0:0.1234 1:0.234 2:0.453 ...... n:0.9876
+    def final_feature_file(self, data, line_scope):
+        # 调整label列的位置到最后
+        cols = list(data)
+        try:
+            cols.append(cols.pop(cols.index('label')))
+            data = data_df.ix[:, cols]
+        except:
+            print("DataFrame need have col with name 'label'.")
+
+        start = line_scope[0]
+        end = line_scope[1]
+        length = end - start + 1
+
+        feature_num = data.shape[1] - 1
+        label = data.ix[start:end, 'label'].astype('str')
+
+        tmp = pd.Series([str(0)] * length)
+        feature_all = tmp.str.cat(data.ix[start:end, all_cols[0]].astype('str'), sep=':')
+        feature_all = label.str.cat(feature_all, sep=' ')
+
+        for i in range(1, feature_num):
+            tmp = pd.Series([str(i)] * length)
+            feature_tmp = tmp.str.cat(data_df.ix[start:end, all_cols[i]].astype('str'), sep=':')
+            feature_all = feature_all.str.cat(feature_tmp, sep=' ')
+        return data, feature_all
 
 
