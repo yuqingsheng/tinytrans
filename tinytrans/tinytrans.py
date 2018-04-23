@@ -237,11 +237,11 @@ class TinyTrans(object):
             if p_is_good == 1:
                 if p == 0:
                     return {}
-                woe, iv = cal_woe_iv(p, n, all_p, all_n)
+                woe, iv = self.cal_woe_iv(p, n, all_p, all_n)
             else:
                 if n == 0:
                     return {}
-                woe, iv = cal_woe_iv(n, p, all_n, all_p)
+                woe, iv = self.cal_woe_iv(n, p, all_n, all_p)
 
             total = p + n
             prate = p / float(total)
@@ -287,10 +287,11 @@ class TinyTrans(object):
         cols = list(data)
         try:
             cols.append(cols.pop(cols.index('label')))
-            data = data_df.ix[:, cols]
+            data = data.ix[:, cols]
         except:
             print("DataFrame need have col with name 'label'.")
 
+        all_cols = data.columns
         start = line_scope[0]
         end = line_scope[1]
         length = end - start + 1
@@ -304,7 +305,7 @@ class TinyTrans(object):
 
         for i in range(1, feature_num):
             tmp = pd.Series([str(i)] * length)
-            feature_tmp = tmp.str.cat(data_df.ix[start:end, all_cols[i]].astype('str'), sep=':')
+            feature_tmp = tmp.str.cat(data.ix[start:end, all_cols[i]].astype('str'), sep=':')
             feature_all = feature_all.str.cat(feature_tmp, sep=' ')
         return data, feature_all
 
