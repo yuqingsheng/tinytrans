@@ -325,7 +325,7 @@ class TinyTrans(object):
     #由pair偏序关系对生成最多的list关系，均是从根节点到叶子结点
     #输入为：[('a','b'),('a','c'),('b','d'),('e','c')]
     #输出为：['a,b,d', 'a,c', 'e,c']
-    def pairs_to_lists(self, v):
+    def pairs_to_lists(v):
         info = {}
         rev_info = {}
         items_level = {}
@@ -409,6 +409,9 @@ class TinyTrans(object):
                 else:
                     if items_level[id2] == 0:
                         items_level[id2] = 1
+                        if id2 in info:
+                            for tmp in info[id2]:
+                                items_level[tmp] += 1
             else:
                 if id2 not in items_level:
                     items_level[id2] = items_level[id1] + 1
@@ -426,6 +429,14 @@ class TinyTrans(object):
             if level not in rev_level:
                 rev_level[level] = []
             rev_level[level].append(id_tmp)
+
+        rev_level2 = {}
+        length_rev_level = len(rev_level.keys())
+        rev_level_keylist = sorted(list(rev_level.keys()))
+        for i in range(length_rev_level):
+            rev_level2[i] = rev_level[rev_level_keylist[i]]
+
+        rev_level = rev_level2
 
         # 简化正向关系，只保留有直接链接的关系
         # 如上例本来正向关系为：
@@ -449,16 +460,33 @@ class TinyTrans(object):
 
         # 根据简化的正向关系和层次关系，得到最后所有的最长连接
         # 输出：['a,b,d', 'a,c', 'e,c']
+
         for i in range(1, len(rev_level.keys())):
             resultlen = len(result)
             for k in range(resultlen):
                 value = result.pop(0)
                 for j in rev_level[i]:
-                    if value[-1] not in info:
-                        result.append(value)
-                    lastvalue = value.split(',')[-1]
-                    if value[-1] in info and j in info[lastvalue]:
-                        yy = value + ',' + j
-                        result.append(yy)
-
-        return result
+                    lastvalue = value.split('+')[-1]
+                    if lastvalue not in info:
+                        if value not in result:
+                            result.append(value)
+                    if lastvalue in info and j not in info[lastvalue]:
+                        if value not in result:
+                            result.append(value)
+                    elif lastvalue in info and j in info[lastvalue]:
+                        yy = value + '+' + j
+                        if yy not in result:
+                            result.append(yy)
+                        if value not in result:
+                            result.append(value)
+        result_final = []
+        for x in result:
+            flag = 0
+            for y in result:
+                if x != y:
+                    if x in y:
+                        flag = 1
+                        break
+            if flag == 0:
+                result_final.append(x)
+        return result_final
