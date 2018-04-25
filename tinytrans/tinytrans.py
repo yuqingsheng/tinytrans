@@ -325,7 +325,7 @@ class TinyTrans(object):
     #由pair偏序关系对生成最多的list关系，均是从根节点到叶子结点
     #输入为：[('a','b'),('a','c'),('b','d'),('e','c')]
     #输出为：['a,b,d', 'a,c', 'e,c']
-    def pairs_to_lists(v):
+    def pairs_to_lists(self, v):
         info = {}
         rev_info = {}
         items_level = {}
