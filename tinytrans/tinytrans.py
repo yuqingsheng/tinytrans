@@ -490,3 +490,119 @@ class TinyTrans(object):
             if flag == 0:
                 result_final.append(x)
         return result_final, rev_level
+
+    # 由pair偏序关系对生成level层级关系
+    def pairs_to_levels(self, v):
+        info = {}
+        rev_info = {}
+        items_level = {}
+        rev_level = {}
+        # 先记录正反向关系，没读入一组二元组，更新正反向关系
+        # 正向关系：k,v---k节点下有哪些v节点，不一定直接连接，但关系上一定是上下关系
+        # 反向关系：k,v---k节点被哪些节点领导，不一定直接连接，但关系上一定是上下关系
+        # 正反向关系如下：
+        # 如果数据输入如下：
+        # v=[('a','b'),('a','c'),('b','d'),('e','c')]
+        # 最后的结构如下：
+        #      a   e
+        #     / \ /
+        #    b   c
+        #   /
+        #  d
+        # 则最后的正反向关系为:
+        # 正向：{'a': ['b', 'c', 'd'], 'b': ['d'], 'e': ['c']}
+        # 反向：{'b': ['a'], 'c': ['a', 'e'], 'd': ['b', 'a']}
+
+        for x in v:
+            id1 = x[0]
+            id2 = x[1]
+
+            # 处理反向关系
+            if id2 not in rev_info:
+                rev_info[id2] = []
+                rev_info[id2].append(id1)
+            else:
+                if id1 not in rev_info[id2]:
+                    rev_info[id2].append(id1)
+            if id1 in rev_info:
+                for tmp in rev_info[id1]:
+                    if tmp not in rev_info[id2]:
+                        rev_info[id2].append(tmp)
+
+            if id2 in info:
+                for tmp in info[id2]:
+                    if id1 not in rev_info[tmp]:
+                        rev_info[tmp].append(id1)
+
+            if id1 in rev_info:
+                for tmp in rev_info[id1]:
+                    if id2 in info:
+                        for tmp2 in info[id2]:
+                            if tmp2 in rev_info:
+                                if tmp not in rev_info[tmp2]:
+                                    rev_info[tmp2].append(tmp)
+                            else:
+                                rev_info[tmp2] = []
+                                rev_info[tmp2].append(tmp)
+
+            if id1 not in info:
+                info[id1] = []
+                info[id1].append(id2)
+            else:
+                if id2 not in info[id1]:
+                    info[id1].append(id2)
+
+            if id1 in rev_info:
+                for id_tmp in rev_info[id1]:
+                    if id2 not in info[id_tmp]:
+                        info[id_tmp].append(id2)
+
+            if id2 in info:
+                for tmp in info[id2]:
+                    if tmp not in info[id1]:
+                        info[id1].append(tmp)
+
+            # 分层
+            # 上一层不一定是下一层的领导，只是从数据层面来说
+            # 得到各个节点所属的层次关系，如上例中：
+            # 最后的到的层次关系如下：
+            # {'a': 0, 'b': 1, 'c': 1, 'd': 2, 'e': 0}
+            # 如e不一定比d大，只是因为链条关系，e的层次在d之上
+
+            if id1 not in items_level:
+                items_level[id1] = 0
+                if id2 not in items_level:
+                    items_level[id2] = 1
+                else:
+                    if items_level[id2] == 0:
+                        items_level[id2] = 1
+                        if id2 in info:
+                            for tmp in info[id2]:
+                                items_level[tmp] += 1
+            else:
+                if id2 not in items_level:
+                    items_level[id2] = items_level[id1] + 1
+                else:
+                    if items_level[id2] <= items_level[id1]:
+                        gap = items_level[id1] - items_level[id2] + 1
+                        items_level[id2] += gap
+                        if id2 in info:
+                            for tmp in info[id2]:
+                                items_level[tmp] += gap
+
+        # 获得反向层级关系
+        # {0: ['a', 'e'], 1: ['b', 'c'], 2: ['d']}
+        for id_tmp, level in items_level.items():
+            if level not in rev_level:
+                rev_level[level] = []
+            rev_level[level].append(id_tmp)
+
+        rev_level2 = {}
+        length_rev_level = len(rev_level.keys())
+        rev_level_keylist = sorted(list(rev_level.keys()))
+        for i in range(length_rev_level):
+            rev_level2[i] = rev_level[rev_level_keylist[i]]
+
+        rev_level = rev_level2
+
+        return rev_level
