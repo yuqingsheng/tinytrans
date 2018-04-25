@@ -489,4 +489,4 @@ class TinyTrans(object):
                         break
             if flag == 0:
                 result_final.append(x)
-        return result_final
+        return result_final, rev_level
